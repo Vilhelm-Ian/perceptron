@@ -8,10 +8,35 @@ struct Point {
 
 impl Point {
     fn random_new() -> Self {
-        return Self {
+        Self {
             x: gen_range(0.0, 500.0),
             y: gen_range(0.0, 500.0),
-        };
+        }
+    }
+}
+
+struct Perceptron {
+    weights: Vec<f32>,
+}
+
+impl Perceptron {
+    fn new() -> Self {
+        Self {
+            weights: (0..2).map(|_| gen_range(-1.0, 1.0)).collect(),
+        }
+    }
+
+    fn guess(&self, inputs: Vec<f32>) -> i32 {
+        let sum: f32 = inputs
+            .iter()
+            .enumerate()
+            .map(|(index, input)| input * self.weights[index])
+            .sum();
+        if sum > 0.0 {
+            1
+        } else {
+            -1
+        }
     }
 }
 

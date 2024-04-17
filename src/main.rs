@@ -4,18 +4,18 @@ use macroquad::prelude::*;
 struct Point {
     x: f32,
     y: f32,
-    color: Color,
+    value: i32,
 }
 
 impl Point {
     fn random_new<F>(guess: F) -> Self
     where
-        F: Fn(f32, f32) -> Color,
+        F: Fn(f32, f32) -> i32,
     {
         let x = gen_range(0.0, 500.0);
         let y = gen_range(0.0, 500.0);
-        let color = guess(x, y);
-        Self { x, y, color }
+        let value = guess(x, y);
+        Self { x, y, value }
     }
 }
 
@@ -39,14 +39,6 @@ impl Perceptron {
         activation_function(sum)
     }
 
-    fn return_color(&self, x: f32, y: f32) -> Color {
-        if self.guess(&vec![x, y]) == 1 {
-            BLUE
-        } else {
-            YELLOW
-        }
-    }
-
     fn train(&mut self, inputs: &Vec<f32>, target: i32) {
         let guess = self.guess(inputs);
         let error = target - guess;
@@ -68,14 +60,14 @@ async fn main() {
     let mut perceptron = Perceptron::new();
     println!("{:?}", perceptron.weights);
     let points_2 = (0..100)
-        .map(|_| Point::random_new(|x, y| perceptron.return_color(x, y)))
+        .map(|_| Point::random_new(|x, y| perceptron.guess(&vec![x, y])))
         .collect::<Vec<Point>>();
     points_1.iter().for_each(|point| {
-        let target = if point.x + point.y > 500.0 { -1 } else { 1 };
+        let target = if point.x + point.y > 500.0 { 1 } else { -1 };
         perceptron.train(&vec![point.x, point.y], target);
     });
     let points_3 = (0..100)
-        .map(|_| Point::random_new(|x, y| perceptron.return_color(x, y)))
+        .map(|_| Point::random_new(|x, y| perceptron.guess(&vec![x, y])))
         .collect::<Vec<Point>>();
     println!("{:?}", perceptron.weights);
     loop {
@@ -84,13 +76,13 @@ async fn main() {
         draw_line(500.0, 0.0, 500.0, 1000.0, 1.0, BLACK);
         draw_line(0.0, 500.0, 1000.0, 500.0, 1.0, BLACK);
         points_1.iter().for_each(|point| {
-            draw_rectangle(point.x, point.y, 10.0, 10.0, point.color);
+            draw_rectangle(point.x, point.y, 10.0, 10.0, get_color(point.value));
         });
         points_2.iter().for_each(|point| {
-            draw_rectangle(500.0 + point.x, point.y, 10.0, 10.0, point.color);
+            draw_rectangle(500.0 + point.x, point.y, 10.0, 10.0, get_color(point.value));
         });
         points_3.iter().for_each(|point| {
-            draw_rectangle(point.x, 500.0 + point.y, 10.0, 10.0, point.color);
+            draw_rectangle(point.x, 500.0 + point.y, 10.0, 10.0, get_color(point.value));
         });
         next_frame().await
     }
@@ -104,10 +96,20 @@ fn activation_function(input: f32) -> i32 {
     }
 }
 
-fn hand_written_function(x: f32, y: f32) -> Color {
+fn hand_written_function(x: f32, y: f32) -> i32 {
     if x + y > 500.0 {
-        BLUE
+        1
     } else {
+        -1
+    }
+}
+
+fn get_color(value: i32) -> Color {
+    if value == 1 {
+        BLUE
+    } else if value == -1 {
         YELLOW
+    } else {
+        panic!("invalid value")
     }
 }
